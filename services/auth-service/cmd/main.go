@@ -9,11 +9,11 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/vasapolrittideah/cashflower-api/services/auth-service/internal/config"
-	"github.com/vasapolrittideah/cashflower-api/shared/database"
-	"github.com/vasapolrittideah/cashflower-api/shared/discovery"
-	"github.com/vasapolrittideah/cashflower-api/shared/logger"
-	"github.com/vasapolrittideah/cashflower-api/shared/utilities"
+	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/config"
+	"github.com/vasapolrittideah/money-tracker-api/shared/database"
+	"github.com/vasapolrittideah/money-tracker-api/shared/discovery"
+	"github.com/vasapolrittideah/money-tracker-api/shared/logger"
+	"github.com/vasapolrittideah/money-tracker-api/shared/utilities"
 )
 
 func main() {
