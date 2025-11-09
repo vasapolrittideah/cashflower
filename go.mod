@@ -6,6 +6,7 @@ require (
 	github.com/hashicorp/consul/api v1.20.0
 	github.com/rs/zerolog v1.34.0
 	google.golang.org/grpc v1.76.0
+	google.golang.org/protobuf v1.36.10
 )
 
 require (
@@ -33,11 +34,11 @@ require (
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251103181224-f26f9409b101 // indirect
-	google.golang.org/protobuf v1.36.10 // indirect
 )
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/matthewhartstonge/argon2 v1.4.1
 	github.com/mattn/go-colorable v0.1.13 // indirect
