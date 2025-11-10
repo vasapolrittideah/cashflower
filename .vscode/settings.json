@@ -2,8 +2,9 @@
   "files.associations": {
     "Tiltfile": "starlark"
   },
-  "python.analysis.exclude": [
-    "**/Tiltfile"
-  ],
+  "python.analysis.exclude": ["**/Tiltfile"],
   "editor.formatOnSave": true,
+  "[helm]": {
+    "editor.formatOnSave": false,
+  }
 }
