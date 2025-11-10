@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "auth-service.fullname" . }}
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "auth-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "auth-service.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: auth-service
+          image: {{ include "auth-service.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          env:
+            - name: ENVIRONMENT
+              value: {{ .Values.environment }}
+            - name: SERVICE_NAME
+              value: {{ include "auth-service.name" . }}
+            - name: SERVICE_ADDRESS
+              value: 0.0.0.0:{{ .Values.service.port }}
+            - name: SERVICE_REGISTER_ADDRESS
+              value: {{ include "auth-service.fullname" . }}.default.svc.cluster.local:{{ .Values.service.port }}
+            - name: CONSUL_ADDRESS
+              value: consul-server.consul.svc.cluster.local:8500
+            - name: MONGO_URI
+              value: mongodb://{{ .Values.mongodb.auth.rootUser }}:{{ .Values.mongodb.auth.rootPassword }}@{{ .Values.mongodb.fullnameOverride }}:27017/{{ index .Values.mongodb.auth.databases 0 }}?authSource=admin
+            - name: MONGO_DB
+              value: {{ index .Values.mongodb.auth.databases 0 }}
+
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              protocol: TCP

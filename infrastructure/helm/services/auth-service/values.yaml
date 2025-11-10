@@ -1,0 +1,25 @@
+replicaCount: 1
+
+environment: ""
+
+image:
+  repository: vasapolrittideah/money-tracker-api-auth-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 9001
+
+mongodb:
+  fullnameOverride: money-tracker-api-auth-mongodb
+  architecture: standalone
+  auth:
+    enabled: true
+    rootUser: root
+    rootPassword: admin
+    usernames: ["auth-user"]
+    passwords: ["auth-password"]
+    databases: ["auth-db"]
+  persistence:
+    enabled: true
+    size: 5Gi
