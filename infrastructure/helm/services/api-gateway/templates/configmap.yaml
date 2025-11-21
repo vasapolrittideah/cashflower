@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "api-gateway.fullname" . }}-config
+  labels:
+    {{- include "api-gateway.labels" . | nindent 4 }}
+data:
+  ENVIRONMENT: {{ .Values.environment }}
+  SERVICE_NAME: {{ include "api-gateway.name" . }}
+  SERVICE_ADDRESS: {{ .Values.service.address }}:{{ .Values.service.port }}
+  CONSUL_ADDRESS: consul-server.consul.svc.cluster.local:8500

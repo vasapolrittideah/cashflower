@@ -4,6 +4,9 @@ version: 1.0.0
 description: Umbrella chart for all microservices
 
 dependencies:
+  - name: external-secrets
+    version: 0.15.0
+    repository: https://charts.external-secrets.io
   - name: api-gateway
     version: 1.0.0
     repository: "file://../services/api-gateway"

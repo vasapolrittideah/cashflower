@@ -43,7 +43,7 @@ func main() {
 	}
 
 	authServiceClient, err := authclient.NewAuthServiceClient(
-		apiGatewayCfg.AuthServiceCfg.Name,
+		"auth-service",
 		consulRegistry,
 	)
 	if err != nil {

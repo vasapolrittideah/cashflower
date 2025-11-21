@@ -1,9 +1,12 @@
 dependencies:
+- name: external-secrets
+  repository: https://charts.external-secrets.io
+  version: 0.15.0
 - name: api-gateway
   repository: file://../services/api-gateway
   version: 1.0.0
 - name: auth-service
   repository: file://../services/auth-service
   version: 1.0.0
-digest: sha256:fa2053f1a06e4d41ce5467713c9f3dadbbc67bc858f13caacd039e9712435090
-generated: "2025-11-10T10:56:06.925467+07:00"
+digest: sha256:2884f2dc48e29af99447879eae7445c8e244f17352cc11ce09f9888c45176612
+generated: "2025-11-21T13:19:13.338712+07:00"

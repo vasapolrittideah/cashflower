@@ -11,8 +11,9 @@ update_settings(
   suppress_unused_image_warnings = None,
 )
 
-# Consul
 helm_repo("hashicorp", "https://helm.releases.hashicorp.com")
+
+# Consul
 helm_resource(
   "consul",
   "hashicorp/consul",
@@ -25,6 +26,25 @@ helm_resource(
     "--values=./infrastructure/helm/consul/values-dev.yaml",
   ],
   pod_readiness = "ignore",
+  resource_deps = ["hashicorp"],
+  labels = "tooling",
+)
+
+# Vault
+helm_resource(
+  "vault",
+  "hashicorp/vault",
+  namespace = "vault",
+  flags = [
+    "--create-namespace",
+    "--set=server.dev.enabled=true",
+    "--set=server.dev.devRootToken=root",
+    "--set=injector.enabled=true",
+    "--set=csi.enabled=true",
+    "--set=ui.enabled=true",
+    "--values=./infrastructure/helm/vault/values.yaml",
+    "--values=./infrastructure/helm/vault/values-dev.yaml",
+  ],
   resource_deps = ["hashicorp"],
   labels = "tooling",
 )
@@ -45,6 +65,20 @@ k8s_resource(
   labels = "tooling",
   extra_pod_selectors = [{"component": "server"}],
   discovery_strategy = "selectors-only",
+)
+
+k8s_resource(
+  workload = "vault",
+  port_forwards = ["8200:8200"],
+  labels = "tooling",
+  extra_pod_selectors = [{"app.kubernetes.io/name": "vault"}],
+  discovery_strategy = "selectors-only",
+)
+
+local_resource(
+  "vault-config",
+  "./scripts/configure_vault.sh",
+  resource_deps = ["vault"],
 )
 
 services = [
@@ -96,5 +130,5 @@ for service in services:
       workload = "money-tracker-api-{}".format(service),
       new_name = service,
       labels = "services",
-      resource_deps = ["consul", db_name],
+      resource_deps = ["consul", "vault-config", db_name],
     )

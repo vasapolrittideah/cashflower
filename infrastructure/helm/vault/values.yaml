@@ -1,0 +1,55 @@
+global:
+  enabled: true
+  tlsDisable: true
+
+injector:
+  enabled: true
+  replicas: 1
+
+server:
+  enabled: true
+  ha:
+    enabled: true
+    replicas: 1
+    raft:
+      enabled: false
+    config: |
+      ui = true
+
+      listener "tcp" {
+        tls_disable = 1
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+      }
+
+      storage "consul" {
+        path = "vault/"
+        address = "consul-server.consul.svc.cluster.local:8500"
+        scheme = "http"
+      }
+
+      service_registration "kubernetes" {}
+
+  service:
+    enabled: true
+    type: ClusterIP
+    port: 8200
+    targetPort: 8200
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: null
+    accessMode: ReadWriteOnce
+
+  auditStorage:
+    enabled: false
+
+  serviceAccount:
+    create: true
+    name: vault
+
+ui:
+  enabled: true
+  serviceType: ClusterIP
+  externalPort: 8200

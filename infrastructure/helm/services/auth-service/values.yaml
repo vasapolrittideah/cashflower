@@ -7,8 +7,20 @@ image:
   tag: "latest"
   pullPolicy: IfNotPresent
 
+vault:
+  server: "http://vault.vault.svc.cluster.local:8200"
+  path: "secret"
+  auth:
+    mountPath: "kubernetes"
+    role: "auth-service"
+
 service:
+  address: 0.0.0.0
   port: 9001
+
+serviceAccount:
+  create: true
+  name: ""
 
 mongodb:
   fullnameOverride: money-tracker-api-auth-mongodb

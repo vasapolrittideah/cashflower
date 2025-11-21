@@ -8,4 +8,5 @@ image:
   pullPolicy: IfNotPresent
 
 service:
+  address: 0.0.0.0
   port: 9000

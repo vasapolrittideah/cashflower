@@ -1,0 +1,6 @@
+server:
+  ha:
+    replicas: 1
+
+  dataStorage:
+    size: 5Gi

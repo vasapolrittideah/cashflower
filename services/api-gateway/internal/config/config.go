@@ -6,14 +6,9 @@ import (
 )
 
 type APIGatewayConfig struct {
-	Environment    string `env:"ENVIRONMENT"`
-	Name           string `env:"SERVICE_NAME"`
-	Address        string `env:"SERVICE_ADDRESS"`
-	AuthServiceCfg AuthServiceConfig
-}
-
-type AuthServiceConfig struct {
-	Name string `env:"AUTH_SERVICE_NAME"`
+	Environment string `env:"ENVIRONMENT"`
+	Name        string `env:"SERVICE_NAME"`
+	Address     string `env:"SERVICE_ADDRESS"`
 }
 
 func NewAPIGatewayConfig(logger *zerolog.Logger) *APIGatewayConfig {

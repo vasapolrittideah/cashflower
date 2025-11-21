@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "auth-service.fullname" . }}-config
+  labels:
+    {{- include "auth-service.labels" . | nindent 4 }}
+data:
+  ENVIRONMENT: {{ .Values.environment }}
+  SERVICE_NAME: {{ include "auth-service.name" . }}
+  SERVICE_ADDRESS: {{ .Values.service.address }}:{{ .Values.service.port }}
+  SERVICE_REGISTER_ADDRESS: {{ include "auth-service.fullname" . }}.default.svc.cluster.local:{{ .Values.service.port }}
+  CONSUL_ADDRESS: consul-server.consul.svc.cluster.local:8500

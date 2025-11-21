@@ -25,3 +25,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "auth-service.image" -}}
 {{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}
 {{- end -}}
+
+{{- define "auth-service.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "auth-service.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
