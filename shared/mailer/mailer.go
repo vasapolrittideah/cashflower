@@ -147,11 +147,11 @@ func (m *Mailer) setEmailMessage(msg *gomail.Message, email Email) {
 
 // mailerConfig holds SMTP configuration for sending emails.
 type mailerConfig struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	From     string
+	Host     string `env:"SMTP_HOST"`
+	Port     int    `env:"SMTP_PORT"`
+	Username string `env:"SMTP_USERNAME"`
+	Password string `env:"SMTP_PASSWORD"`
+	From     string `env:"SMTP_FROM"`
 }
 
 // newMailerConfig creates a MailerConfig instance from environment variables.
