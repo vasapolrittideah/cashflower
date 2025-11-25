@@ -1,0 +1,51 @@
+# Build artifacts
+build/
+tmp/
+**/tmp/
+*.log
+**/*.log
+
+# Git
+.git/
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+*_test.go
+testdata/
+**/testdata/
+
+# Infrastructure (not needed in container)
+infrastructure/
+scripts/
+Tiltfile
+Makefile
+Lefthook.yml
+
+# Documentation
+*.md
+README.md
+docs/
+
+# Protos (compiled versions in shared/)
+protos/
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies (will be downloaded in container)
+vendor/

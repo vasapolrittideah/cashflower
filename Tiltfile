@@ -87,23 +87,15 @@ services = [
 ]
 
 for service in services:
-  compile_cmd = "./scripts/compile_service.sh {}".format(service)
-  local_resource(
-    "{}-compile".format(service),
-    compile_cmd,
-    deps = ["./services/{}/".format(service), "./shared"],
-    labels = "compiles",
-  )
-
-  docker_build_with_restart(
+  docker_build(
     "vasapolrittideah/money-tracker-api-{}:tilt".format(service),
     ".",
-    entrypoint = ["/app/build/{}".format(service)],
     dockerfile = "./infrastructure/docker/{}/Dockerfile.dev".format(service),
-    only = ["./build/{}".format(service), "./shared"],
     live_update = [
-      sync("./build", "/app/build"),
+      sync("./services/{}".format(service), "/app/services/{}".format(service)),
       sync("./shared", "/app/shared"),
+      sync("./go.mod", "/app/go.mod"),
+      sync("./go.sum", "/app/go.sum"),
     ],
   )
 

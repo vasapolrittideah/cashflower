@@ -1,7 +1,12 @@
-FROM alpine
+FROM golang:1.25-alpine
+
 WORKDIR /app
 
-ADD shared shared
-ADD build build
+RUN go install github.com/air-verse/air@latest
 
-ENTRYPOINT ["/app/build/api-gateway"]
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+CMD ["air", "-c", "./services/api-gateway/.air.toml"]
