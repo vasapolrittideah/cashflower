@@ -126,6 +126,8 @@ func errorCodeFromGRPCCode(code codes.Code) string {
 		return contract.ErrorCodeForbidden
 	case codes.ResourceExhausted:
 		return contract.ErrorCodeRateLimit
+	case codes.Unauthenticated:
+		return contract.ErrorCodeUnauthorized
 	default:
 		return contract.ErrorCodeInternal
 	}
