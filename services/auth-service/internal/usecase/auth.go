@@ -9,11 +9,30 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/config"
-	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/domain"
+	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/model"
+	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/repository"
 	authtypes "github.com/vasapolrittideah/money-tracker-api/services/auth-service/pkg/types"
 	"github.com/vasapolrittideah/money-tracker-api/shared/auth"
 	"github.com/vasapolrittideah/money-tracker-api/shared/security"
 )
+
+// AuthUsecase defines the interface for authentication-related use cases.
+type AuthUsecase interface {
+	Login(ctx context.Context, params LoginParams) (*authtypes.Tokens, error)
+	Register(ctx context.Context, params RegisterParams) (*authtypes.Tokens, error)
+}
+
+// LoginParams defines the parameters for user login.
+type LoginParams struct {
+	Email    string
+	Password string
+}
+
+// RegisterParams defines the parameters for user registration.
+type RegisterParams struct {
+	Email    string
+	Password string
+}
 
 var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
@@ -21,30 +40,30 @@ var (
 )
 
 type authUsecase struct {
-	identityRepo   domain.IdentityRepository
-	sessionRepo    domain.SessionRepository
-	userRepo       domain.UserRepository
-	authenticator  auth.Authenticator
+	identityRepo   repository.IdentityRepository
+	sessionRepo    repository.SessionRepository
+	userRepo       repository.UserRepository
+	jwtAuth        auth.JWTAuthenticator
 	authServiceCfg *config.AuthServiceConfig
 }
 
 func NewAuthUsecase(
-	identityRepo domain.IdentityRepository,
-	sessionRepo domain.SessionRepository,
-	userRepo domain.UserRepository,
-	authenticator auth.Authenticator,
+	identityRepo repository.IdentityRepository,
+	sessionRepo repository.SessionRepository,
+	userRepo repository.UserRepository,
+	jwtAuth auth.JWTAuthenticator,
 	authServiceCfg *config.AuthServiceConfig,
-) domain.AuthUsecase {
+) AuthUsecase {
 	return &authUsecase{
 		identityRepo:   identityRepo,
 		sessionRepo:    sessionRepo,
 		userRepo:       userRepo,
-		authenticator:  authenticator,
+		jwtAuth:        jwtAuth,
 		authServiceCfg: authServiceCfg,
 	}
 }
 
-func (u *authUsecase) Login(ctx context.Context, params domain.LoginParams) (*authtypes.Tokens, error) {
+func (u *authUsecase) Login(ctx context.Context, params LoginParams) (*authtypes.Tokens, error) {
 	user, err := u.userRepo.GetUserByEmail(ctx, params.Email)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -67,13 +86,13 @@ func (u *authUsecase) Login(ctx context.Context, params domain.LoginParams) (*au
 	return u.createAuthSession(ctx, user.ID.Hex())
 }
 
-func (u *authUsecase) Register(ctx context.Context, params domain.RegisterParams) (*authtypes.Tokens, error) {
+func (u *authUsecase) Register(ctx context.Context, params RegisterParams) (*authtypes.Tokens, error) {
 	passwordHash, err := security.HashPassword(params.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := u.userRepo.CreateUser(ctx, &domain.User{
+	user, err := u.userRepo.CreateUser(ctx, &model.User{
 		Email:        params.Email,
 		PasswordHash: passwordHash,
 	})
@@ -85,7 +104,7 @@ func (u *authUsecase) Register(ctx context.Context, params domain.RegisterParams
 		return nil, err
 	}
 
-	if _, err := u.identityRepo.CreateIdentity(ctx, &domain.Identity{
+	if _, err := u.identityRepo.CreateIdentity(ctx, &model.Identity{
 		UserID:     user.ID.Hex(),
 		Provider:   "email",
 		ProviderID: "",
@@ -98,7 +117,7 @@ func (u *authUsecase) Register(ctx context.Context, params domain.RegisterParams
 }
 
 func (u *authUsecase) createAuthSession(ctx context.Context, userID string) (*authtypes.Tokens, error) {
-	session, err := u.sessionRepo.CreateSession(ctx, &domain.Session{UserID: userID})
+	session, err := u.sessionRepo.CreateSession(ctx, &model.Session{UserID: userID})
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +143,7 @@ func (u *authUsecase) createAuthSession(ctx context.Context, userID string) (*au
 	}
 
 	now := time.Now()
-	if _, err := u.sessionRepo.UpdateTokens(ctx, session.ID.Hex(), domain.UpdateTokensParams{
+	if _, err := u.sessionRepo.UpdateTokens(ctx, session.ID.Hex(), repository.UpdateTokensParams{
 		AccessToken:           accessToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  now.Add(u.authServiceCfg.Token.AccessTokenExpiresIn),
@@ -152,7 +171,7 @@ func (u *authUsecase) generateToken(userID, sessionID, secret string, expiresIn 
 			Audience:  jwt.ClaimStrings{u.authServiceCfg.Token.Issuer},
 		},
 	}
-	token, err := u.authenticator.GenerateToken(claims, secret)
+	token, err := u.jwtAuth.GenerateToken(claims, secret)
 	if err != nil {
 		return "", err
 	}

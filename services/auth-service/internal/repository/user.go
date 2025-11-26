@@ -10,8 +10,35 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
-	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/domain"
+	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/model"
 )
+
+// UserRepository defines the interface for user-related database operations.
+type UserRepository interface {
+	CreateUser(ctx context.Context, user *model.User) (*model.User, error)
+	GetUser(ctx context.Context, id string) (*model.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
+	UpdateUser(ctx context.Context, id string, params UpdateUserParams) (*model.User, error)
+	DeleteUser(ctx context.Context, id string) (*model.User, error)
+	ListUsers(ctx context.Context, params FilterUsersParams) ([]*model.User, error)
+}
+
+// UpdateUserParams defines the optional parameters for updating a user.
+// Only the fields that are not nil will be updated.
+type UpdateUserParams struct {
+	Email        *string
+	PasswordHash *string
+}
+
+// FilterUsersParams defines the parameters for filtering and paginating users.
+type FilterUsersParams struct {
+	Email    *string
+	Verified *bool
+	Limit    uint64
+	Offset   uint64
+	SortBy   *string
+	SortDesc bool
+}
 
 const userCollection = "users"
 
@@ -19,7 +46,7 @@ type userMongoRepository struct {
 	db *mongo.Database
 }
 
-func NewUserMongoRepository(ctx context.Context, logger *zerolog.Logger, db *mongo.Database) domain.UserRepository {
+func NewUserMongoRepository(ctx context.Context, logger *zerolog.Logger, db *mongo.Database) UserRepository {
 	collection := db.Collection(userCollection)
 
 	indexes := []mongo.IndexModel{
@@ -37,7 +64,7 @@ func NewUserMongoRepository(ctx context.Context, logger *zerolog.Logger, db *mon
 	return &userMongoRepository{db: db}
 }
 
-func (r *userMongoRepository) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
+func (r *userMongoRepository) CreateUser(ctx context.Context, user *model.User) (*model.User, error) {
 	now := time.Now()
 	user.CreatedAt = now
 	user.UpdatedAt = now
@@ -56,7 +83,7 @@ func (r *userMongoRepository) CreateUser(ctx context.Context, user *domain.User)
 	return user, nil
 }
 
-func (r *userMongoRepository) GetUser(ctx context.Context, id string) (*domain.User, error) {
+func (r *userMongoRepository) GetUser(ctx context.Context, id string) (*model.User, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -67,7 +94,7 @@ func (r *userMongoRepository) GetUser(ctx context.Context, id string) (*domain.U
 		return nil, result.Err()
 	}
 
-	var user domain.User
+	var user model.User
 	if err := result.Decode(&user); err != nil {
 		return nil, err
 	}
@@ -75,13 +102,13 @@ func (r *userMongoRepository) GetUser(ctx context.Context, id string) (*domain.U
 	return &user, nil
 }
 
-func (r *userMongoRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *userMongoRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	result := r.db.Collection(userCollection).FindOne(ctx, bson.M{"email": email})
 	if result.Err() != nil {
 		return nil, result.Err()
 	}
 
-	var user domain.User
+	var user model.User
 	if err := result.Decode(&user); err != nil {
 		return nil, err
 	}
@@ -92,8 +119,8 @@ func (r *userMongoRepository) GetUserByEmail(ctx context.Context, email string) 
 func (r *userMongoRepository) UpdateUser(
 	ctx context.Context,
 	id string,
-	params domain.UpdateUserParams,
-) (*domain.User, error) {
+	params UpdateUserParams,
+) (*model.User, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -124,7 +151,7 @@ func (r *userMongoRepository) UpdateUser(
 		return nil, result.Err()
 	}
 
-	var user domain.User
+	var user model.User
 	if err := result.Decode(&user); err != nil {
 		return nil, err
 	}
@@ -132,7 +159,7 @@ func (r *userMongoRepository) UpdateUser(
 	return &user, nil
 }
 
-func (r *userMongoRepository) DeleteUser(ctx context.Context, id string) (*domain.User, error) {
+func (r *userMongoRepository) DeleteUser(ctx context.Context, id string) (*model.User, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -143,7 +170,7 @@ func (r *userMongoRepository) DeleteUser(ctx context.Context, id string) (*domai
 		return nil, result.Err()
 	}
 
-	var user domain.User
+	var user model.User
 	if err := result.Decode(&user); err != nil {
 		return nil, err
 	}
@@ -151,7 +178,7 @@ func (r *userMongoRepository) DeleteUser(ctx context.Context, id string) (*domai
 	return &user, nil
 }
 
-func (r *userMongoRepository) ListUsers(ctx context.Context, params domain.FilterUsersParams) ([]*domain.User, error) {
+func (r *userMongoRepository) ListUsers(ctx context.Context, params FilterUsersParams) ([]*model.User, error) {
 	findOptions := options.Find()
 
 	limit := params.Limit
@@ -190,9 +217,9 @@ func (r *userMongoRepository) ListUsers(ctx context.Context, params domain.Filte
 	}
 	defer cursor.Close(ctx)
 
-	var users []*domain.User
+	var users []*model.User
 	for cursor.Next(ctx) {
-		var user domain.User
+		var user model.User
 		if err := cursor.Decode(&user); err != nil {
 			return nil, err
 		}

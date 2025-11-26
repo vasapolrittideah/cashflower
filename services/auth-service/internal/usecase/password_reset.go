@@ -12,20 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/config"
-	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/domain"
 	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/model"
 	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/repository"
 	authtypes "github.com/vasapolrittideah/money-tracker-api/services/auth-service/pkg/types"
 	"github.com/vasapolrittideah/money-tracker-api/shared/auth"
 	"github.com/vasapolrittideah/money-tracker-api/shared/mailer"
 	"github.com/vasapolrittideah/money-tracker-api/shared/security"
-)
-
-var (
-	ErrTokenNotFound    = errors.New("password reset token not found")
-	ErrTokenAlreadyUsed = errors.New("password reset token has already been used")
-	ErrTokenExpired     = errors.New("password reset token has expired")
-	ErrInvalidToken     = errors.New("invalid password reset token")
 )
 
 // PasswordResetUsecase defines the business logic for password reset token operations.
@@ -41,16 +33,23 @@ type PasswordResetUsecase interface {
 }
 
 type passwordResetUsecase struct {
-	userRepo       domain.UserRepository
+	userRepo       repository.UserRepository
 	tokenRepo      repository.PasswordResetTokenRepository
 	jwtAuth        auth.JWTAuthenticator
 	mailer         *mailer.Mailer
 	authServiceCfg *config.AuthServiceConfig
 }
 
+var (
+	ErrTokenNotFound    = errors.New("password reset token not found")
+	ErrTokenAlreadyUsed = errors.New("password reset token has already been used")
+	ErrTokenExpired     = errors.New("password reset token has expired")
+	ErrInvalidToken     = errors.New("invalid password reset token")
+)
+
 // NewPasswordResetUsecase creates a new instance of PasswordResetUsecase.
 func NewPasswordResetUsecase(
-	userRepo domain.UserRepository,
+	userRepo repository.UserRepository,
 	tokenRepo repository.PasswordResetTokenRepository,
 	jwtAuth auth.JWTAuthenticator,
 	mailer *mailer.Mailer,
@@ -149,7 +148,7 @@ func (u *passwordResetUsecase) ResetPassword(ctx context.Context, jti, newPasswo
 	}
 
 	// Update user's password
-	if _, err := u.userRepo.UpdateUser(ctx, resetToken.UserID.Hex(), domain.UpdateUserParams{
+	if _, err := u.userRepo.UpdateUser(ctx, resetToken.UserID.Hex(), repository.UpdateUserParams{
 		PasswordHash: &passwordHash,
 	}); err != nil {
 		return err

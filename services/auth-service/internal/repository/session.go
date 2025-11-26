@@ -8,8 +8,23 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
-	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/domain"
+	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/model"
 )
+
+// SessionRepository defines the interface for session-related database operations.
+type SessionRepository interface {
+	CreateSession(ctx context.Context, session *model.Session) (*model.Session, error)
+	GetSessionByUserID(ctx context.Context, userID string) (*model.Session, error)
+	UpdateTokens(ctx context.Context, id string, params UpdateTokensParams) (*model.Session, error)
+}
+
+// UpdateTokensParams defines the parameters for updating session tokens.
+type UpdateTokensParams struct {
+	AccessToken           string    `bson:"access_token"`
+	RefreshToken          string    `bson:"refresh_token"`
+	AccessTokenExpiresAt  time.Time `bson:"access_token_expires_at"`
+	RefreshTokenExpiresAt time.Time `bson:"refresh_token_expires_at"`
+}
 
 const sessionCollection = "sessions"
 
@@ -17,11 +32,11 @@ type sessionMongoRepository struct {
 	db *mongo.Database
 }
 
-func NewSessionMongoRepository(db *mongo.Database) domain.SessionRepository {
+func NewSessionMongoRepository(db *mongo.Database) SessionRepository {
 	return &sessionMongoRepository{db: db}
 }
 
-func (r *sessionMongoRepository) CreateSession(ctx context.Context, session *domain.Session) (*domain.Session, error) {
+func (r *sessionMongoRepository) CreateSession(ctx context.Context, session *model.Session) (*model.Session, error) {
 	now := time.Now()
 	session.CreatedAt = now
 	session.UpdatedAt = now
@@ -40,13 +55,13 @@ func (r *sessionMongoRepository) CreateSession(ctx context.Context, session *dom
 	return session, nil
 }
 
-func (r *sessionMongoRepository) GetSessionByUserID(ctx context.Context, userID string) (*domain.Session, error) {
+func (r *sessionMongoRepository) GetSessionByUserID(ctx context.Context, userID string) (*model.Session, error) {
 	result := r.db.Collection(sessionCollection).FindOne(ctx, bson.M{"user_id": userID})
 	if result.Err() != nil {
 		return nil, result.Err()
 	}
 
-	var session domain.Session
+	var session model.Session
 	if err := result.Decode(&session); err != nil {
 		return nil, err
 	}
@@ -57,8 +72,8 @@ func (r *sessionMongoRepository) GetSessionByUserID(ctx context.Context, userID 
 func (r *sessionMongoRepository) UpdateTokens(
 	ctx context.Context,
 	id string,
-	params domain.UpdateTokensParams,
-) (*domain.Session, error) {
+	params UpdateTokensParams,
+) (*model.Session, error) {
 	objectID, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -73,7 +88,7 @@ func (r *sessionMongoRepository) UpdateTokens(
 		return nil, result.Err()
 	}
 
-	var session domain.Session
+	var session model.Session
 	if err := result.Decode(&session); err != nil {
 		return nil, err
 	}

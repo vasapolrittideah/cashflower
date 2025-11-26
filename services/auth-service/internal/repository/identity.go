@@ -8,8 +8,16 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
-	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/domain"
+	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/model"
 )
+
+// IdentityRepository defines the interface for identity-related database operations.
+type IdentityRepository interface {
+	CreateIdentity(ctx context.Context, identity *model.Identity) (*model.Identity, error)
+	GetIdentitiesByUserID(ctx context.Context, userID string) ([]model.Identity, error)
+	GetIdentityByProvider(ctx context.Context, providerID string, provider string) (*model.Identity, error)
+	UpdateLastLogin(ctx context.Context, userID string) error
+}
 
 const identityCollection = "identities"
 
@@ -17,14 +25,14 @@ type identityMongoRepository struct {
 	db *mongo.Database
 }
 
-func NewIdentityMongoRepository(db *mongo.Database) domain.IdentityRepository {
+func NewIdentityMongoRepository(db *mongo.Database) IdentityRepository {
 	return &identityMongoRepository{db: db}
 }
 
 func (r *identityMongoRepository) CreateIdentity(
 	ctx context.Context,
-	identity *domain.Identity,
-) (*domain.Identity, error) {
+	identity *model.Identity,
+) (*model.Identity, error) {
 	now := time.Now()
 	identity.CreatedAt = now
 	identity.UpdatedAt = now
@@ -43,13 +51,13 @@ func (r *identityMongoRepository) CreateIdentity(
 	return identity, nil
 }
 
-func (r *identityMongoRepository) GetIdentitiesByUserID(ctx context.Context, userID string) ([]domain.Identity, error) {
+func (r *identityMongoRepository) GetIdentitiesByUserID(ctx context.Context, userID string) ([]model.Identity, error) {
 	cursor, err := r.db.Collection(identityCollection).Find(ctx, bson.M{"user_id": userID})
 	if err != nil {
 		return nil, err
 	}
 
-	var identities []domain.Identity
+	var identities []model.Identity
 	if err := cursor.All(ctx, &identities); err != nil {
 		return nil, err
 	}
@@ -61,7 +69,7 @@ func (r *identityMongoRepository) GetIdentityByProvider(
 	ctx context.Context,
 	providerID string,
 	provider string,
-) (*domain.Identity, error) {
+) (*model.Identity, error) {
 	result := r.db.Collection(identityCollection).FindOne(ctx, bson.M{
 		"provider_id": providerID,
 		"provider":    provider,
@@ -70,7 +78,7 @@ func (r *identityMongoRepository) GetIdentityByProvider(
 		return nil, result.Err()
 	}
 
-	var identity domain.Identity
+	var identity model.Identity
 	if err := result.Decode(&identity); err != nil {
 		return nil, err
 	}

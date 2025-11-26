@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/domain"
 	"github.com/vasapolrittideah/money-tracker-api/services/auth-service/internal/usecase"
 	authpbv1 "github.com/vasapolrittideah/money-tracker-api/shared/protos/auth/v1"
 )
@@ -17,18 +16,21 @@ import (
 type authGRPCHandler struct {
 	authpbv1.UnimplementedAuthServiceServer
 
-	logger      *zerolog.Logger
-	authUsecase domain.AuthUsecase
+	logger               *zerolog.Logger
+	authUsecase          usecase.AuthUsecase
+	passwordResetUsecase usecase.PasswordResetUsecase
 }
 
 func NewAuthGRPCHandler(
 	server *grpc.Server,
 	logger *zerolog.Logger,
-	authUsecase domain.AuthUsecase,
+	authUsecase usecase.AuthUsecase,
+	passwordResetUsecase usecase.PasswordResetUsecase,
 ) authpbv1.AuthServiceServer {
 	handler := &authGRPCHandler{
-		logger:      logger,
-		authUsecase: authUsecase,
+		logger:               logger,
+		authUsecase:          authUsecase,
+		passwordResetUsecase: passwordResetUsecase,
 	}
 	authpbv1.RegisterAuthServiceServer(server, handler)
 
@@ -36,7 +38,7 @@ func NewAuthGRPCHandler(
 }
 
 func (h *authGRPCHandler) Login(ctx context.Context, req *authpbv1.LoginRequest) (*authpbv1.LoginResponse, error) {
-	params := domain.LoginParams{
+	params := usecase.LoginParams{
 		Email:    req.GetEmail(),
 		Password: req.GetPassword(),
 	}
@@ -63,7 +65,7 @@ func (h *authGRPCHandler) Register(
 	ctx context.Context,
 	req *authpbv1.RegisterRequest,
 ) (*authpbv1.RegisterResponse, error) {
-	params := domain.RegisterParams{
+	params := usecase.RegisterParams{
 		Email:    req.GetEmail(),
 		Password: req.GetPassword(),
 	}
